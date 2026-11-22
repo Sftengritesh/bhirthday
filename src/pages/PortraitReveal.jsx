@@ -33,11 +33,23 @@ export default function PortraitReveal() {
 
     img.onerror = () => {
       console.error('Failed to load dotted portrait')
+      // Immediate fallback if image error
+      setShowQuote(true)
+      setShowTitle(true)
+      setShowButton(true)
     }
+
+    // Bulletproof production safety timer: guarantees button appears within 2.5s
+    const timer1 = setTimeout(() => setShowQuote(true), 1200)
+    const timer2 = setTimeout(() => setShowTitle(true), 1800)
+    const timer3 = setTimeout(() => setShowButton(true), 2400)
 
     return () => {
       window.removeEventListener('resize', setSize)
       if (animRef.current) cancelAnimationFrame(animRef.current)
+      clearTimeout(timer1)
+      clearTimeout(timer2)
+      clearTimeout(timer3)
     }
   }, [])
 
@@ -47,17 +59,18 @@ export default function PortraitReveal() {
 
     const aspect = img.naturalHeight / img.naturalWidth // 1024 / 713 ≈ 1.436
 
-    // Sized to fit gracefully on both mobile and desktop screens
-    let portraitW = Math.min(W * 0.72, 330)
+    // Sized to ensure plenty of breathing room for text and buttons below
+    let portraitW = Math.min(W * 0.65, 290)
     let portraitH = portraitW * aspect
-    const maxH = Math.min(H * 0.48, 480)
+    const maxH = Math.min(H * 0.42, 420)
     if (portraitH > maxH) {
       portraitH = maxH
       portraitW = portraitH / aspect
     }
 
     const offsetX = (W - portraitW) / 2
-    const offsetY = Math.max(20, (H - portraitH) * 0.26)
+    // Positioned in upper-mid area
+    const offsetY = Math.max(16, (H - portraitH) * 0.16)
 
     // Draw to offscreen canvas to sample exact dot coordinates
     const offscreen = document.createElement('canvas')
@@ -70,7 +83,7 @@ export default function PortraitReveal() {
     const data = imgData.data
 
     const particles = []
-    const step = 2.8 // High sampling density for accurate stipple details
+    const step = 2.8 // High sampling density
 
     for (let y = 0; y < portraitH; y += step) {
       for (let x = 0; x < portraitW; x += step) {
@@ -80,18 +93,15 @@ export default function PortraitReveal() {
         const b = data[idx + 2]
         const brightness = (r + g + b) / 3
 
-        // Sample the dotted portrait's stipple dots
         if (brightness > 85) {
           const tx = offsetX + x
           const ty = offsetY + y
 
-          // Start from random outer celestial points
           const angle = Math.random() * Math.PI * 2
-          const distance = Math.random() * Math.max(W, H) * 0.85 + 60
+          const distance = Math.random() * Math.max(W, H) * 0.75 + 40
           const sx = W / 2 + Math.cos(angle) * distance
           const sy = H / 2 + Math.sin(angle) * distance
 
-          // Colors: white stipple dots with champagne gold and blush pink shimmer
           let color = '#FFF9F5'
           const rand = Math.random()
           if (rand > 0.82) {
@@ -108,14 +118,14 @@ export default function PortraitReveal() {
             radius: Math.random() * 0.9 + 1.1,
             color,
             alpha: 0,
-            speed: Math.random() * 0.04 + 0.02,
+            speed: Math.random() * 0.055 + 0.035, // Snappier convergence
           })
         }
       }
     }
 
     // Ambient floating pink petals & golden sparkles around portrait
-    const ambientSparkles = Array.from({ length: 40 }, () => ({
+    const ambientSparkles = Array.from({ length: 35 }, () => ({
       x: Math.random() * W,
       y: Math.random() * H,
       radius: Math.random() * 2 + 1,
@@ -128,7 +138,7 @@ export default function PortraitReveal() {
     let allDone = false
 
     function animate() {
-      // Dark pink luxury velvet background on canvas for high-contrast portrait visibility
+      // Dark pink luxury velvet background
       ctx.fillStyle = 'rgba(25, 12, 19, 0.25)'
       ctx.fillRect(0, 0, W, H)
 
@@ -151,10 +161,10 @@ export default function PortraitReveal() {
       for (const p of particles) {
         p.x += (p.tx - p.x) * p.speed
         p.y += (p.ty - p.y) * p.speed
-        p.alpha = Math.min(p.alpha + 0.022, 1)
+        p.alpha = Math.min(p.alpha + 0.03, 1)
 
         const dist = Math.hypot(p.tx - p.x, p.ty - p.y)
-        if (dist < 1.5) arrivedCount++
+        if (dist < 2.5) arrivedCount++
 
         ctx.globalAlpha = p.alpha
         ctx.fillStyle = p.color
@@ -163,9 +173,9 @@ export default function PortraitReveal() {
         ctx.fill()
       }
 
-      // Once particles land, seamlessly reveal the full authentic dotted portrait
-      if (frameCount > 65) {
-        const revealAlpha = Math.min((frameCount - 65) / 75, 0.96)
+      // Seamlessly reveal the full authentic dotted portrait
+      if (frameCount > 50) {
+        const revealAlpha = Math.min((frameCount - 50) / 60, 0.96)
         ctx.save()
         ctx.globalAlpha = revealAlpha
         ctx.beginPath()
@@ -180,8 +190,8 @@ export default function PortraitReveal() {
       }
 
       // Soft champagne-gold and pink border + radiant halo glow
-      if (frameCount > 80) {
-        const glowProg = Math.min((frameCount - 80) / 50, 0.8)
+      if (frameCount > 65) {
+        const glowProg = Math.min((frameCount - 65) / 45, 0.8)
         ctx.save()
         ctx.globalAlpha = glowProg
         ctx.strokeStyle = 'rgba(232, 201, 141, 0.65)'
@@ -208,12 +218,12 @@ export default function PortraitReveal() {
 
       ctx.globalAlpha = 1
 
-      // Trigger text reveals after dots reconstruct the portrait
-      if (arrivedCount / particles.length > 0.85 && !allDone) {
+      // Trigger text reveals smoothly as dots arrive (or at frame 60)
+      if ((frameCount >= 60 || arrivedCount / particles.length > 0.55) && !allDone) {
         allDone = true
-        setTimeout(() => setShowQuote(true), 350)
-        setTimeout(() => setShowTitle(true), 1600)
-        setTimeout(() => setShowButton(true), 2600)
+        setShowQuote(true)
+        setTimeout(() => setShowTitle(true), 400)
+        setTimeout(() => setShowButton(true), 800)
       }
 
       animRef.current = requestAnimationFrame(animate)
@@ -243,7 +253,7 @@ export default function PortraitReveal() {
             className="absolute text-2xl select-none"
             style={{
               left: `${10 + i * 16}%`,
-              top: `${15 + (i % 3) * 20}%`,
+              top: `${12 + (i % 3) * 18}%`,
               opacity: 0.7,
             }}
             animate={{
@@ -264,17 +274,17 @@ export default function PortraitReveal() {
       </div>
 
       {/* Overlay Typography & Interactive CTA */}
-      <div className="absolute inset-0 flex flex-col items-center justify-end pb-10 md:pb-14 px-4 pointer-events-none z-10">
+      <div className="absolute inset-0 flex flex-col items-center justify-end pb-6 sm:pb-8 md:pb-12 px-4 pointer-events-none z-10">
         <AnimatePresence>
           {showQuote && (
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.2, ease: 'easeOut' }}
-              className="text-center mb-4 max-w-lg pointer-events-none"
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className="text-center mb-3 sm:mb-4 max-w-lg pointer-events-none"
             >
               <p
-                className="text-[#FFF9F5]/85 text-base md:text-lg font-light leading-relaxed italic"
+                className="text-[#FFF9F5]/90 text-sm sm:text-base md:text-lg font-light leading-relaxed italic"
                 style={{ fontFamily: "'Cormorant Garamond', serif" }}
               >
                 "Some people make ordinary days feel a little more special..."
@@ -288,17 +298,17 @@ export default function PortraitReveal() {
             <motion.div
               initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, ease: 'easeOut' }}
-              className="text-center mb-5"
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className="text-center mb-4 sm:mb-5"
             >
               <h1
-                className="text-3xl md:text-5xl lg:text-6xl font-light tracking-wide mb-2 text-gradient-gold"
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light tracking-wide mb-1 sm:mb-2 text-gradient-gold"
                 style={{ fontFamily: "'Playfair Display', serif" }}
               >
                 HAPPIEST BIRTHDAY, PRANJAL! 💐
               </h1>
               <p
-                className="text-[#E8C98D]/90 text-xs md:text-sm tracking-widest uppercase"
+                className="text-[#E8C98D]/90 text-xs sm:text-sm tracking-widest uppercase"
                 style={{ fontFamily: 'Poppins, sans-serif', letterSpacing: '0.25em' }}
               >
                 Today, this little fairytale universe belongs to you.
@@ -312,14 +322,14 @@ export default function PortraitReveal() {
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className="pointer-events-auto flex flex-col items-center gap-4"
+              transition={{ duration: 0.6 }}
+              className="pointer-events-auto flex flex-col items-center gap-3 sm:gap-4"
             >
               <motion.button
                 onClick={() => navigate('/login')}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.96 }}
-                className="btn-princess"
+                className="btn-princess shadow-princess-lg"
               >
                 DISCOVER YOUR SURPRISE →
               </motion.button>
