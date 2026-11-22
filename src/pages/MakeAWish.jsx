@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import FloatingElements from '../components/FloatingElements'
 import PageNav from '../components/PageNav'
+import { sounds } from '../utils/audio'
 
 export default function MakeAWish() {
   const navigate = useNavigate()
@@ -11,6 +12,7 @@ export default function MakeAWish() {
 
   const handleWish = () => {
     setWished(true)
+    sounds.wish()
     const stars = Array.from({ length: 35 }, (_, i) => ({
       id: i,
       x: 15 + Math.random() * 70,

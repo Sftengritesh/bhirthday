@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import confetti from 'canvas-confetti'
 import FloatingElements from '../components/FloatingElements'
 import PageNav from '../components/PageNav'
+import { sounds } from '../utils/audio'
 
 export default function Cake() {
   const navigate = useNavigate()
@@ -19,6 +20,7 @@ export default function Cake() {
     setTimeout(() => {
       setPhase('cut')
       setCandlesLit(false)
+      sounds.celebration()
 
       // 2. Confetti explosion
       confetti({

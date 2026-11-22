@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import FloatingElements from '../components/FloatingElements'
 import PageNav from '../components/PageNav'
+import { sounds } from '../utils/audio'
 
 const CORRECT_ID = 'pranjal vishwakarma'
 const CORRECT_PW = '23 nov 2026'
@@ -20,6 +21,7 @@ export default function Login() {
     const pw = password.trim().toLowerCase()
 
     if (uid === CORRECT_ID && pw === CORRECT_PW) {
+      sounds.success()
       setSuccess(true)
       setTimeout(() => navigate('/welcome'), 2600)
     } else {

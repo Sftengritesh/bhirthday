@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Camera, Heart, Sparkles } from 'lucide-react'
+import { X } from 'lucide-react'
 import PageNav from '../components/PageNav'
 import FloatingElements from '../components/FloatingElements'
 
@@ -13,7 +13,6 @@ const SCRAPBOOK_PHOTOS = [
     tapeStyle: 'washi-tape-floral',
     rotation: -2.5,
     flowerDeco: '🌸 Pressed rose',
-    isEmpty: false,
   },
   {
     id: 2,
@@ -23,40 +22,33 @@ const SCRAPBOOK_PHOTOS = [
     tapeStyle: 'washi-tape',
     rotation: 2.2,
     flowerDeco: '🌷 Sweet blossom',
-    isEmpty: false,
   },
   {
     id: 3,
-    src: null,
-    caption: 'Adventures waiting to be made 🌸',
-    scriptNote: 'sweet moments ahead',
+    src: '/images/memories/photo-3.jpg',
+    caption: 'A moment worth keeping. 🌸',
+    scriptNote: 'sweet moments',
     tapeStyle: 'washi-tape-floral',
     rotation: -1.8,
-    flowerDeco: '✨ Reserved for memory #3',
-    isEmpty: true,
-    placeholderNote: 'Tap to add future memory',
+    flowerDeco: '✨ Cherished memory',
   },
   {
     id: 4,
-    src: null,
-    caption: 'Laughter waiting to be captured 🎀',
+    src: '/images/memories/photo-4.jpg',
+    caption: 'Some pictures need no explanation. 🎀',
     scriptNote: 'love you more',
     tapeStyle: 'washi-tape',
     rotation: 2.8,
-    flowerDeco: '🌺 Reserved for memory #4',
-    isEmpty: true,
-    placeholderNote: 'Tap to add future memory',
+    flowerDeco: '🌺 Unfiltered joy',
   },
   {
     id: 5,
-    src: null,
-    caption: 'Forever iconic, forever you ✨',
+    src: '/images/memories/photo-5.jpg',
+    caption: 'Rare and radiant. ✨',
     scriptNote: 'our favorite chapter',
     tapeStyle: 'washi-tape-floral',
     rotation: -2.0,
-    flowerDeco: '💐 Reserved for memory #5',
-    isEmpty: true,
-    placeholderNote: 'Tap to add future memory',
+    flowerDeco: '💐 Forever iconic',
   },
 ]
 
@@ -83,12 +75,12 @@ export default function Memories() {
         transition={{ duration: 0.8 }}
         className="text-center mb-10 max-w-2xl mx-auto relative z-10"
       >
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-princess mb-3">
-          <span className="text-sm">📖</span>
-          <span className="text-xs font-semibold tracking-widest text-deep-rose uppercase">
+        <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full glass-princess mb-3 shadow-sm">
+          <span className="text-base">📖</span>
+          <span className="text-xs md:text-sm font-bold tracking-widest text-deep-rose uppercase">
             A little digital scrapbook
           </span>
-          <span className="text-sm">🌸</span>
+          <span className="text-base">🌸</span>
         </div>
         <h1
           className="text-4xl md:text-5xl lg:text-6xl font-normal text-gradient-rose mb-3"
@@ -104,7 +96,7 @@ export default function Memories() {
         </p>
       </motion.div>
 
-      {/* Main Vintage Scrapbook Album Page — Inspired directly by user reference */}
+      {/* Main Vintage Scrapbook Album Page */}
       <div className="max-w-5xl mx-auto relative z-10">
         <div
           className="rounded-3xl p-6 sm:p-10 md:p-14 relative shadow-princess-lg"
@@ -129,17 +121,17 @@ export default function Memories() {
             💐
           </div>
 
-          {/* Scrapbook Polaroids Grid */}
+          {/* Scrapbook Polaroids Grid (All 5 Photos Shown) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10 pt-4">
             {SCRAPBOOK_PHOTOS.map((item, idx) => (
               <motion.div
                 key={item.id}
                 initial={{ opacity: 0, y: 35, rotate: item.rotation * 1.5 }}
                 animate={{ opacity: 1, y: 0, rotate: item.rotation }}
-                transition={{ delay: 0.15 + idx * 0.12, duration: 0.7 }}
+                transition={{ delay: 0.12 + idx * 0.1, duration: 0.7 }}
                 whileHover={{ scale: 1.04, rotate: 0, zIndex: 20 }}
                 className="relative cursor-pointer group"
-                onClick={() => !item.isEmpty && setSelected(item)}
+                onClick={() => setSelected(item)}
               >
                 {/* Washi Tape at Top */}
                 <div
@@ -149,7 +141,7 @@ export default function Memories() {
                   }}
                 />
 
-                {/* Dried Pressed Flower Accent */}
+                {/* Dried Pressed Flower Accents */}
                 {idx === 0 && (
                   <div className="absolute -top-6 -left-4 z-20 text-3xl select-none pointer-events-none filter drop-shadow-sm">
                     🌾🌸
@@ -160,14 +152,24 @@ export default function Memories() {
                     🌷
                   </div>
                 )}
+                {idx === 2 && (
+                  <div className="absolute -top-4 -right-3 z-20 text-2xl select-none pointer-events-none filter drop-shadow-sm">
+                    ✨
+                  </div>
+                )}
+                {idx === 3 && (
+                  <div className="absolute -bottom-3 -left-3 z-20 text-2xl select-none pointer-events-none filter drop-shadow-sm">
+                    🎀
+                  </div>
+                )}
 
                 {/* Polaroid Frame */}
                 <div
-                  className="rounded-xs overflow-hidden transition-shadow duration-300 group-hover:shadow-xl"
+                  className="rounded-xs overflow-hidden transition-shadow duration-300 group-hover:shadow-2xl"
                   style={{
                     background: '#FFFFFF',
                     padding: '12px 12px 32px 12px',
-                    boxShadow: '0 12px 30px rgba(100, 60, 75, 0.15), 0 2px 6px rgba(0, 0, 0, 0.08)',
+                    boxShadow: '0 14px 32px rgba(100, 60, 75, 0.16), 0 2px 6px rgba(0, 0, 0, 0.08)',
                     border: '1px solid rgba(230, 215, 205, 0.8)',
                   }}
                 >
@@ -176,37 +178,22 @@ export default function Memories() {
                     className="relative overflow-hidden rounded-xs bg-[#F7F2EE]"
                     style={{ width: '100%', paddingBottom: '115%' }}
                   >
-                    {!item.isEmpty ? (
-                      <img
-                        src={item.src}
-                        alt={item.caption}
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        style={{ objectPosition: 'center 15%' }}
-                      />
-                    ) : (
-                      /* Aesthetic Empty Slot for Future Photos */
-                      <div className="absolute inset-0 flex flex-col items-center justify-center p-4 text-center border-2 border-dashed border-rose-pink/40 bg-baby-pink/30 rounded-xs">
-                        <Camera className="w-8 h-8 text-rose-pink/60 mb-2" />
-                        <span className="text-xs font-serif italic text-deep-rose/80 font-medium">
-                          {item.placeholderNote}
-                        </span>
-                        <span className="text-[10px] text-rose-pink/80 mt-1 uppercase tracking-widest">
-                          Slot #{item.id}
-                        </span>
-                      </div>
-                    )}
+                    <img
+                      src={item.src}
+                      alt={item.caption}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      style={{ objectPosition: 'center 15%' }}
+                    />
 
                     {/* View Magnifier Overlay on hover */}
-                    {!item.isEmpty && (
-                      <div className="absolute inset-0 bg-[#A64D70]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                        <span className="px-3 py-1 rounded-full bg-white/90 text-deep-rose text-xs font-semibold tracking-wider shadow-md">
-                          VIEW ✦
-                        </span>
-                      </div>
-                    )}
+                    <div className="absolute inset-0 bg-[#A64D70]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                      <span className="px-4 py-1.5 rounded-full bg-white/95 text-deep-rose text-xs font-bold tracking-wider shadow-md">
+                        VIEW ✦
+                      </span>
+                    </div>
                   </div>
 
-                  {/* Handwritten Script Note under Photo (matches reference) */}
+                  {/* Handwritten Script Note under Photo */}
                   <div className="pt-3 px-1 text-center">
                     <p
                       className="text-base text-[#4A2D3A] font-semibold"
@@ -223,7 +210,7 @@ export default function Memories() {
                   </div>
                 </div>
 
-                {/* Little Cut-out Hearts scattered around (as in reference) */}
+                {/* Little Cut-out Hearts scattered around */}
                 <div className="absolute -bottom-2 -left-2 text-rose-pink/70 text-sm select-none pointer-events-none">
                   💗
                 </div>
@@ -263,9 +250,9 @@ export default function Memories() {
             >
               <button
                 onClick={() => setSelected(null)}
-                className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-white/90 border border-rose-pink flex items-center justify-center text-deep-rose hover:bg-baby-pink transition-colors cursor-pointer shadow-md"
+                className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-white/90 border border-rose-pink flex items-center justify-center text-deep-rose hover:bg-baby-pink transition-colors cursor-pointer shadow-md"
               >
-                <X size={18} />
+                <X size={20} />
               </button>
 
               <div className="w-full flex items-center justify-center overflow-hidden rounded-xl bg-[#FFF9F5] shadow-inner">
