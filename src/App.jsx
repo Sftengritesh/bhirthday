@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import PortraitReveal from './pages/PortraitReveal'
@@ -56,6 +56,7 @@ export default function App() {
           <Route path="/kittens" element={<Kittens />} />
           <Route path="/secret" element={<Secret />} />
           <Route path="/finale" element={<Finale />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AnimatePresence>
     </div>
