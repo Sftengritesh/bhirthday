@@ -5,267 +5,216 @@ import { motion, AnimatePresence } from 'framer-motion'
 export default function PortraitReveal() {
   const canvasRef = useRef(null)
   const navigate = useNavigate()
+  const [portraitVisible, setPortraitVisible] = useState(false)
   const [showQuote, setShowQuote] = useState(false)
   const [showTitle, setShowTitle] = useState(false)
   const [showButton, setShowButton] = useState(false)
+  const [imageLoaded, setImageLoaded] = useState(false)
   const animRef = useRef(null)
+
+  const portraitSrc = '/images/portrait/pranjal-dotted-portrait.png'
+  const fallbackSrc = '/images/portrait/pranjal-dotted-portrait.jpg'
+  const [currentSrc, setCurrentSrc] = useState(portraitSrc)
+
+  // Force reveal everything (failsafe & click-to-skip)
+  const revealAll = () => {
+    setImageLoaded(true)
+    setPortraitVisible(true)
+    setShowQuote(true)
+    setShowTitle(true)
+    setShowButton(true)
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
 
-    const setSize = () => {
-      canvas.width = window.innerWidth
-      canvas.height = window.innerHeight
-    }
-    setSize()
-    window.addEventListener('resize', setSize)
+    let width = (canvas.width = window.innerWidth)
+    let height = (canvas.height = window.innerHeight)
 
-    // Load the EXACT uploaded dotted portrait
+    const handleResize = () => {
+      if (!canvas) return
+      width = canvas.width = window.innerWidth
+      height = canvas.height = window.innerHeight
+    }
+    window.addEventListener('resize', handleResize)
+
+    // Preload image
     const img = new Image()
-    img.crossOrigin = 'anonymous'
-    img.src = '/images/portrait/pranjal-dotted-portrait.jpg'
-
+    img.src = currentSrc
     img.onload = () => {
-      startDotReconstruction(canvas, ctx, img)
+      setImageLoaded(true)
     }
-
     img.onerror = () => {
-      console.error('Failed to load dotted portrait')
-      // Immediate fallback if image error
-      setShowQuote(true)
-      setShowTitle(true)
-      setShowButton(true)
-    }
-
-    // Bulletproof production safety timer: guarantees button appears within 2.5s
-    const timer1 = setTimeout(() => setShowQuote(true), 1200)
-    const timer2 = setTimeout(() => setShowTitle(true), 1800)
-    const timer3 = setTimeout(() => setShowButton(true), 2400)
-
-    return () => {
-      window.removeEventListener('resize', setSize)
-      if (animRef.current) cancelAnimationFrame(animRef.current)
-      clearTimeout(timer1)
-      clearTimeout(timer2)
-      clearTimeout(timer3)
-    }
-  }, [])
-
-  function startDotReconstruction(canvas, ctx, img) {
-    const W = canvas.width
-    const H = canvas.height
-
-    const aspect = img.naturalHeight / img.naturalWidth // 1024 / 713 ≈ 1.436
-
-    // Sized to ensure plenty of breathing room for text and buttons below
-    let portraitW = Math.min(W * 0.65, 290)
-    let portraitH = portraitW * aspect
-    const maxH = Math.min(H * 0.42, 420)
-    if (portraitH > maxH) {
-      portraitH = maxH
-      portraitW = portraitH / aspect
-    }
-
-    const offsetX = (W - portraitW) / 2
-    // Positioned in upper-mid area
-    const offsetY = Math.max(16, (H - portraitH) * 0.16)
-
-    // Draw to offscreen canvas to sample exact dot coordinates
-    const offscreen = document.createElement('canvas')
-    offscreen.width = portraitW
-    offscreen.height = portraitH
-    const oc = offscreen.getContext('2d')
-    oc.drawImage(img, 0, 0, portraitW, portraitH)
-
-    const imgData = oc.getImageData(0, 0, portraitW, portraitH)
-    const data = imgData.data
-
-    const particles = []
-    const step = 2.8 // High sampling density
-
-    for (let y = 0; y < portraitH; y += step) {
-      for (let x = 0; x < portraitW; x += step) {
-        const idx = (Math.floor(y) * portraitW + Math.floor(x)) * 4
-        const r = data[idx]
-        const g = data[idx + 1]
-        const b = data[idx + 2]
-        const brightness = (r + g + b) / 3
-
-        if (brightness > 85) {
-          const tx = offsetX + x
-          const ty = offsetY + y
-
-          const angle = Math.random() * Math.PI * 2
-          const distance = Math.random() * Math.max(W, H) * 0.75 + 40
-          const sx = W / 2 + Math.cos(angle) * distance
-          const sy = H / 2 + Math.sin(angle) * distance
-
-          let color = '#FFF9F5'
-          const rand = Math.random()
-          if (rand > 0.82) {
-            color = '#E8C98D' // Champagne gold
-          } else if (rand > 0.68) {
-            color = '#F8BBD0' // Blush pink
-          }
-
-          particles.push({
-            x: sx,
-            y: sy,
-            tx,
-            ty,
-            radius: Math.random() * 0.9 + 1.1,
-            color,
-            alpha: 0,
-            speed: Math.random() * 0.055 + 0.035, // Snappier convergence
-          })
-        }
+      // Try fallback jpg
+      if (currentSrc !== fallbackSrc) {
+        setCurrentSrc(fallbackSrc)
+      } else {
+        setImageLoaded(true)
       }
     }
 
-    // Ambient floating pink petals & golden sparkles around portrait
-    const ambientSparkles = Array.from({ length: 35 }, () => ({
-      x: Math.random() * W,
-      y: Math.random() * H,
-      radius: Math.random() * 2 + 1,
+    // Particle Swarm Configuration
+    // Target center is where the portrait card sits
+    const targetCenterX = width / 2
+    const targetCenterY = height * 0.38
+
+    const PARTICLE_COUNT = Math.min(width < 640 ? 600 : 1200, 1400)
+    const particles = []
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const angle = Math.random() * Math.PI * 2
+      const dist = Math.random() * Math.max(width, height) * 0.7 + 80
+      const sx = targetCenterX + Math.cos(angle) * dist
+      const sy = targetCenterY + Math.sin(angle) * dist
+
+      // Destination within the portrait card area
+      const tx = targetCenterX + (Math.random() - 0.5) * (width < 640 ? 180 : 220)
+      const ty = targetCenterY + (Math.random() - 0.5) * (width < 640 ? 258 : 315)
+
+      let color = '#FFF9F5'
+      const rand = Math.random()
+      if (rand > 0.75) color = '#E8C98D' // Champagne gold
+      else if (rand > 0.5) color = '#F8BBD0' // Blush pink
+      else if (rand > 0.35) color = '#E8DDFB' // Soft lavender
+
+      particles.push({
+        sx,
+        sy,
+        tx,
+        ty,
+        radius: Math.random() * 1.5 + 1.0,
+        color,
+        delay: Math.random() * 0.4,
+      })
+    }
+
+    // Floating Ambient Starlight Sparkles
+    const sparkles = Array.from({ length: 30 }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      r: Math.random() * 1.8 + 0.8,
       color: Math.random() > 0.5 ? '#E8C98D' : '#F8BBD0',
       alpha: Math.random() * 0.7 + 0.2,
-      vy: Math.random() * 0.4 + 0.1,
+      vy: Math.random() * 0.4 + 0.15,
     }))
 
-    let frameCount = 0
-    let allDone = false
+    const DURATION = 1800 // 1.8s smooth convergence
+    let startTime = null
 
-    function animate() {
-      // Dark pink luxury velvet background
-      ctx.fillStyle = 'rgba(25, 12, 19, 0.25)'
-      ctx.fillRect(0, 0, W, H)
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp
+      const elapsed = timestamp - startTime
+      const progress = Math.min(elapsed / DURATION, 1)
 
-      frameCount++
+      ctx.clearRect(0, 0, width, height)
 
-      // Draw ambient sparkles
-      for (const s of ambientSparkles) {
+      // Ambient floating starlight
+      for (const s of sparkles) {
         s.y -= s.vy
-        if (s.y < 0) s.y = H
+        if (s.y < 0) s.y = height
         ctx.fillStyle = s.color
         ctx.globalAlpha = s.alpha
         ctx.beginPath()
-        ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2)
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2)
         ctx.fill()
       }
 
-      let arrivedCount = 0
+      // Reconstructing particles flying towards portrait
+      if (progress < 1) {
+        for (const p of particles) {
+          const pElapsed = Math.max(0, elapsed - p.delay * 1000)
+          const pProg = Math.min(pElapsed / (DURATION - 300), 1)
+          // Cubic ease-out
+          const ease = 1 - Math.pow(1 - pProg, 3)
 
-      // Animate reconstruction particles towards their target dot positions
-      for (const p of particles) {
-        p.x += (p.tx - p.x) * p.speed
-        p.y += (p.ty - p.y) * p.speed
-        p.alpha = Math.min(p.alpha + 0.03, 1)
+          const curX = p.sx + (p.tx - p.sx) * ease
+          const curY = p.sy + (p.ty - p.sy) * ease
+          const alpha = Math.min(pProg * 1.4, 0.95)
 
-        const dist = Math.hypot(p.tx - p.x, p.ty - p.y)
-        if (dist < 2.5) arrivedCount++
-
-        ctx.globalAlpha = p.alpha
-        ctx.fillStyle = p.color
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2)
-        ctx.fill()
-      }
-
-      // Seamlessly reveal the full authentic dotted portrait
-      if (frameCount > 50) {
-        const revealAlpha = Math.min((frameCount - 50) / 60, 0.96)
-        ctx.save()
-        ctx.globalAlpha = revealAlpha
-        ctx.beginPath()
-        if (ctx.roundRect) {
-          ctx.roundRect(offsetX, offsetY, portraitW, portraitH, 16)
-        } else {
-          ctx.rect(offsetX, offsetY, portraitW, portraitH)
+          ctx.globalAlpha = alpha
+          ctx.fillStyle = p.color
+          ctx.beginPath()
+          ctx.arc(curX, curY, p.radius, 0, Math.PI * 2)
+          ctx.fill()
         }
-        ctx.clip()
-        ctx.drawImage(img, offsetX, offsetY, portraitW, portraitH)
-        ctx.restore()
-      }
-
-      // Soft champagne-gold and pink border + radiant halo glow
-      if (frameCount > 65) {
-        const glowProg = Math.min((frameCount - 65) / 45, 0.8)
-        ctx.save()
-        ctx.globalAlpha = glowProg
-        ctx.strokeStyle = 'rgba(232, 201, 141, 0.65)'
-        ctx.lineWidth = 1.5
-        ctx.beginPath()
-        if (ctx.roundRect) {
-          ctx.roundRect(offsetX, offsetY, portraitW, portraitH, 16)
-        } else {
-          ctx.rect(offsetX, offsetY, portraitW, portraitH)
-        }
-        ctx.stroke()
-
-        // Radial golden-pink aura
-        const cx = offsetX + portraitW / 2
-        const cy = offsetY + portraitH / 2
-        const glowGrad = ctx.createRadialGradient(cx, cy, portraitW * 0.35, cx, cy, portraitW * 0.95)
-        glowGrad.addColorStop(0, `rgba(232, 201, 141, ${glowProg * 0.16})`)
-        glowGrad.addColorStop(0.5, `rgba(248, 187, 208, ${glowProg * 0.09})`)
-        glowGrad.addColorStop(1, 'transparent')
-        ctx.fillStyle = glowGrad
-        ctx.fillRect(0, 0, W, H)
-        ctx.restore()
       }
 
       ctx.globalAlpha = 1
 
-      // Trigger text reveals smoothly as dots arrive (or at frame 60)
-      if ((frameCount >= 60 || arrivedCount / particles.length > 0.55) && !allDone) {
-        allDone = true
-        setShowQuote(true)
-        setTimeout(() => setShowTitle(true), 400)
-        setTimeout(() => setShowButton(true), 800)
+      if (progress < 1) {
+        animRef.current = requestAnimationFrame(animate)
       }
-
-      animRef.current = requestAnimationFrame(animate)
     }
 
-    animate()
-  }
+    animRef.current = requestAnimationFrame(animate)
+
+    // Sequence timing
+    const tPortrait = setTimeout(() => setPortraitVisible(true), 1200)
+    const tQuote = setTimeout(() => setShowQuote(true), 1600)
+    const tTitle = setTimeout(() => setShowTitle(true), 2100)
+    const tButton = setTimeout(() => setShowButton(true), 2500)
+
+    // Guaranteed production safety timeouts
+    const safetyTimer = setTimeout(() => {
+      revealAll()
+    }, 2800)
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        revealAll()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      document.removeEventListener('visibilitychange', handleVisibility)
+      if (animRef.current) cancelAnimationFrame(animRef.current)
+      clearTimeout(tPortrait)
+      clearTimeout(tQuote)
+      clearTimeout(tTitle)
+      clearTimeout(tButton)
+      clearTimeout(safetyTimer)
+    }
+  }, [currentSrc])
 
   return (
     <div
-      className="relative min-h-screen w-full overflow-hidden"
+      className="relative min-h-screen w-full flex flex-col items-center justify-center px-4 py-8 overflow-x-hidden cursor-pointer select-none"
+      onClick={revealAll}
       style={{
-        background: 'radial-gradient(ellipse at 50% 30%, #301624 0%, #1A0B14 60%, #0D0509 100%)',
+        background: 'radial-gradient(ellipse at 50% 25%, #381525 0%, #200B17 50%, #0E040A 100%)',
       }}
     >
-      {/* HTML Canvas Particle Engine */}
+      {/* Background Stardust Canvas */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full block"
+        className="absolute inset-0 w-full h-full pointer-events-none z-0"
       />
 
-      {/* Floating Pink Butterflies & Sparkles */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      {/* Floating Butterflies */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
         {[...Array(6)].map((_, i) => (
           <motion.div
             key={i}
             className="absolute text-2xl select-none"
             style={{
-              left: `${10 + i * 16}%`,
-              top: `${12 + (i % 3) * 18}%`,
-              opacity: 0.7,
+              left: `${8 + i * 16}%`,
+              top: `${10 + (i % 3) * 22}%`,
+              opacity: 0.75,
             }}
             animate={{
-              x: [0, 18, -10, 0],
-              y: [0, -18, -32, 0],
-              rotate: [0, 8, -6, 0],
+              x: [0, 15, -12, 0],
+              y: [0, -20, -35, 0],
+              rotate: [0, 10, -8, 0],
             }}
             transition={{
-              duration: 7 + i,
+              duration: 6.5 + i,
               repeat: Infinity,
               ease: 'easeInOut',
-              delay: i * 0.8,
+              delay: i * 0.7,
             }}
           >
             🦋
@@ -273,15 +222,61 @@ export default function PortraitReveal() {
         ))}
       </div>
 
-      {/* Overlay Typography & Interactive CTA */}
-      <div className="absolute inset-0 flex flex-col items-center justify-end pb-6 sm:pb-8 md:pb-12 px-4 pointer-events-none z-10">
+      {/* Main Content Container (Flex column, responsive, never overflows) */}
+      <div className="relative z-10 flex flex-col items-center text-center max-w-2xl mx-auto my-auto w-full">
+        {/* Authentic Dotted Portrait with Royal Gold-Pink Frame */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92 }}
+          animate={{
+            opacity: portraitVisible ? 1 : 0,
+            scale: portraitVisible ? 1 : 0.92,
+          }}
+          transition={{ duration: 1.0, ease: 'easeOut' }}
+          className="relative mb-5 sm:mb-6"
+        >
+          {/* Radial Glowing Aura Behind Portrait */}
+          <div
+            className="absolute -inset-4 sm:-inset-6 rounded-3xl opacity-60 blur-xl pointer-events-none transition-opacity duration-1000"
+            style={{
+              background: 'radial-gradient(circle, rgba(232,201,141,0.45) 0%, rgba(248,187,208,0.3) 50%, transparent 75%)',
+            }}
+          />
+
+          {/* Portrait Card */}
+          <div
+            className="relative rounded-2xl sm:rounded-3xl p-1.5 sm:p-2 shadow-2xl transition-all duration-700"
+            style={{
+              background: 'linear-gradient(135deg, rgba(232,201,141,0.85), rgba(248,187,208,0.7), rgba(232,201,141,0.85))',
+              boxShadow: '0 0 35px rgba(232, 201, 141, 0.35), 0 0 70px rgba(248, 187, 208, 0.25)',
+            }}
+          >
+            <div className="rounded-xl sm:rounded-2xl overflow-hidden bg-black/95">
+              <img
+                src={currentSrc}
+                alt="Pranjal Vishwakarma - Authentic Dotted Portrait"
+                className="w-48 sm:w-56 md:w-64 h-auto object-cover block"
+                onError={() => {
+                  if (currentSrc !== fallbackSrc) setCurrentSrc(fallbackSrc)
+                }}
+              />
+            </div>
+
+            {/* Corner Decorative Sparkles */}
+            <span className="absolute -top-2.5 -left-2.5 text-base sm:text-lg select-none">✨</span>
+            <span className="absolute -top-2.5 -right-2.5 text-base sm:text-lg select-none">👑</span>
+            <span className="absolute -bottom-2.5 -left-2.5 text-base sm:text-lg select-none">🌸</span>
+            <span className="absolute -bottom-2.5 -right-2.5 text-base sm:text-lg select-none">✨</span>
+          </div>
+        </motion.div>
+
+        {/* State 3: Introductory Quote */}
         <AnimatePresence>
           {showQuote && (
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, ease: 'easeOut' }}
-              className="text-center mb-3 sm:mb-4 max-w-lg pointer-events-none"
+              className="mb-2 sm:mb-3 max-w-lg px-2"
             >
               <p
                 className="text-[#FFF9F5]/90 text-sm sm:text-base md:text-lg font-light leading-relaxed italic"
@@ -293,23 +288,24 @@ export default function PortraitReveal() {
           )}
         </AnimatePresence>
 
+        {/* State 3: Birthday Greeting */}
         <AnimatePresence>
           {showTitle && (
             <motion.div
-              initial={{ opacity: 0, scale: 0.92 }}
+              initial={{ opacity: 0, scale: 0.94 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, ease: 'easeOut' }}
-              className="text-center mb-4 sm:mb-5"
+              className="mb-4 sm:mb-6 px-2"
             >
               <h1
-                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light tracking-wide mb-1 sm:mb-2 text-gradient-gold"
+                className="text-2xl sm:text-4xl md:text-5xl font-light tracking-wide mb-1.5 sm:mb-2 text-gradient-gold"
                 style={{ fontFamily: "'Playfair Display', serif" }}
               >
                 HAPPIEST BIRTHDAY, PRANJAL! 💐
               </h1>
               <p
-                className="text-[#E8C98D]/90 text-xs sm:text-sm tracking-widest uppercase"
-                style={{ fontFamily: 'Poppins, sans-serif', letterSpacing: '0.25em' }}
+                className="text-[#E8C98D]/90 text-xs sm:text-sm tracking-widest uppercase font-medium"
+                style={{ fontFamily: 'Poppins, sans-serif', letterSpacing: '0.22em' }}
               >
                 Today, this little fairytale universe belongs to you.
               </p>
@@ -317,25 +313,29 @@ export default function PortraitReveal() {
           )}
         </AnimatePresence>
 
+        {/* State 4: Entry Button */}
         <AnimatePresence>
           {showButton && (
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="pointer-events-auto flex flex-col items-center gap-3 sm:gap-4"
+              className="flex flex-col items-center gap-3 sm:gap-4 mt-1"
             >
               <motion.button
-                onClick={() => navigate('/login')}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigate('/login')
+                }}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.96 }}
-                className="btn-princess shadow-princess-lg"
+                className="btn-princess shadow-princess-lg text-sm sm:text-base px-8 py-3.5 sm:py-4"
               >
-                DISCOVER YOUR SURPRISE →
+                ENTER YOUR LITTLE WORLD →
               </motion.button>
 
-              {/* Cute Princess Kittens in Bottom Corners */}
-              <div className="flex gap-10 opacity-90 pt-1">
+              {/* Cute Princess Kittens */}
+              <div className="flex gap-8 opacity-90 pt-1">
                 <span
                   className="animate-kitten-bounce text-2xl"
                   title="Kitten with flower 🐱🌸"
