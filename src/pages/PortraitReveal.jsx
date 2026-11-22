@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+import { startFairytaleMusic } from '../utils/audio'
 
 export default function PortraitReveal() {
   const canvasRef = useRef(null)
@@ -325,6 +326,7 @@ export default function PortraitReveal() {
               <motion.button
                 onClick={(e) => {
                   e.stopPropagation()
+                  startFairytaleMusic()
                   navigate('/login')
                 }}
                 whileHover={{ scale: 1.05 }}

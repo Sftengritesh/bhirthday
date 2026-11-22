@@ -92,15 +92,17 @@ export const startFairytaleMusic = () => {
   if (isMusicPlaying) return
   isMusicPlaying = true
 
-  // 1. Try local audio file first if user uploaded an MP3
+  // 1. Play our custom-edited 320kbps master cut of 'She Is' by The Fray
   if (!bgAudioElement) {
     const audio = new Audio('/audio/background-music.mp3')
     audio.loop = true
-    audio.volume = 0.5
+    audio.volume = 0.55
+    bgAudioElement = audio
     audio.play().then(() => {
-      bgAudioElement = audio
-    }).catch(() => {
-      // 2. Play built-in Web Audio API Music Box synthesizer if no file
+      // playing smoothly
+    }).catch((err) => {
+      console.log('Audio autoplay prevented or waiting for interaction:', err)
+      // 2. Play built-in Web Audio API Music Box synthesizer if audio file blocked
       startSyntheticMusicBox()
     })
   } else {

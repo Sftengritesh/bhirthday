@@ -620,6 +620,41 @@ export default function Cake() {
                 YOU DESERVE THE WORLD. 💗
               </p>
 
+              {/* Special Birthday Guest Video Surprise */}
+              <div className="pt-6 border-t border-rose-pink/40 mt-6 text-center">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/90 mb-3 text-xs font-bold tracking-widest text-deep-rose uppercase shadow-sm">
+                  <span>🦆 Special Birthday Guest</span>
+                </div>
+                <h3
+                  className="text-2xl sm:text-3xl font-semibold text-deep-rose mb-1.5"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  Look Who Brought You Another Cake! 🎂✨
+                </h3>
+                <p
+                  className="text-sm sm:text-base italic text-[#5A3546] mb-4 max-w-md mx-auto"
+                  style={{ fontFamily: "'Cormorant Garamond', serif" }}
+                >
+                  "He heard one cake wasn't enough for the princess, so he brought a cookie cake & an iced latte too! 🥺🍰"
+                </p>
+
+                {/* Video Container in Princess Rounded Border */}
+                <div className="relative max-w-xs mx-auto rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-black/90">
+                  <video
+                    src="/video/birthday-duck-cake.mp4"
+                    controls
+                    playsInline
+                    loop
+                    autoPlay
+                    muted
+                    className="w-full h-auto object-cover block"
+                  />
+                </div>
+                <p className="text-xs text-[#8C586E] italic mt-2.5">
+                  Tap video for sound 🔊 • Happy Birthday Pranjal! 🎀
+                </p>
+              </div>
+
               <div className="flex gap-4 justify-center flex-wrap pt-4">
                 <button
                   onClick={handleReplay}

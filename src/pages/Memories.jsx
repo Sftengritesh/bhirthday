@@ -50,6 +50,16 @@ const SCRAPBOOK_PHOTOS = [
     rotation: -2.0,
     flowerDeco: '💐 Forever iconic',
   },
+  {
+    id: 6,
+    isVideo: true,
+    src: '/video/birthday-duck-cake.mp4',
+    caption: 'VIP Birthday Guest Delivery! 🦆🎂',
+    scriptNote: 'special birthday wish',
+    tapeStyle: 'washi-tape-floral',
+    rotation: 2.1,
+    flowerDeco: '🎉 Live Birthday Wish',
+  },
 ]
 
 export default function Memories() {
@@ -173,22 +183,38 @@ export default function Memories() {
                     border: '1px solid rgba(230, 215, 205, 0.8)',
                   }}
                 >
-                  {/* Photo Canvas Area */}
+                  {/* Photo / Video Canvas Area */}
                   <div
                     className="relative overflow-hidden rounded-xs bg-[#F7F2EE]"
                     style={{ width: '100%', paddingBottom: '115%' }}
                   >
-                    <img
-                      src={item.src}
-                      alt={item.caption}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      style={{ objectPosition: 'center 15%' }}
-                    />
+                    {item.isVideo ? (
+                      <>
+                        <video
+                          src={item.src}
+                          autoPlay
+                          loop
+                          muted
+                          playsInline
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        />
+                        <div className="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-deep-rose/85 text-white text-[10px] font-bold tracking-wider uppercase flex items-center gap-1 shadow-md z-10">
+                          <span>🎥 Live</span>
+                        </div>
+                      </>
+                    ) : (
+                      <img
+                        src={item.src}
+                        alt={item.caption}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        style={{ objectPosition: 'center 15%' }}
+                      />
+                    )}
 
                     {/* View Magnifier Overlay on hover */}
                     <div className="absolute inset-0 bg-[#A64D70]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
                       <span className="px-4 py-1.5 rounded-full bg-white/95 text-deep-rose text-xs font-bold tracking-wider shadow-md">
-                        VIEW ✦
+                        {item.isVideo ? 'PLAY VIDEO ✦' : 'VIEW ✦'}
                       </span>
                     </div>
                   </div>
@@ -256,11 +282,21 @@ export default function Memories() {
               </button>
 
               <div className="w-full flex items-center justify-center overflow-hidden rounded-xl bg-[#FFF9F5] shadow-inner">
-                <img
-                  src={selected.src}
-                  alt={selected.caption}
-                  className="max-h-[68vh] w-auto max-w-full object-contain rounded-lg"
-                />
+                {selected.isVideo ? (
+                  <video
+                    src={selected.src}
+                    controls
+                    autoPlay
+                    playsInline
+                    className="max-h-[68vh] w-auto max-w-full object-contain rounded-lg shadow-lg"
+                  />
+                ) : (
+                  <img
+                    src={selected.src}
+                    alt={selected.caption}
+                    className="max-h-[68vh] w-auto max-w-full object-contain rounded-lg"
+                  />
+                )}
               </div>
 
               <div className="text-center pt-4">
